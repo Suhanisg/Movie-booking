@@ -29,6 +29,18 @@ export default function Landing() {
   const [booked, setBooked] = useState(null);
   // Pehli baar aane par instructions dikhao
   const [showTour, setShowTour] = useState(() => !hasSeenTour(LANDING_TOUR));
+  // true = button se khola gaya, isliye turant dikhao (wait nahi)
+  const [openNow, setOpenNow] = useState(false);
+
+  const reopenTour = () => {
+    setOpenNow(true);
+    setShowTour(true);
+  };
+
+  const closeTour = () => {
+    setShowTour(false);
+    setOpenNow(false);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -101,14 +113,20 @@ export default function Landing() {
 
         <button
           type="button"
-          onClick={() => setShowTour(true)}
+          onClick={reopenTour}
           className="mt-4 block w-full text-center text-xs text-ink-soft underline"
         >
           Instructions dobara dekhein
         </button>
       </div>
 
-      {showTour && <Onboarding tour={LANDING_TOUR} onClose={() => setShowTour(false)} />}
+      {showTour && (
+        <Onboarding
+          tour={LANDING_TOUR}
+          delayMs={openNow ? 0 : undefined}
+          onClose={closeTour}
+        />
+      )}
     </div>
   );
 }

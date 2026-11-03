@@ -6,10 +6,11 @@ import { EVENT } from "../config/event";
 const ORGANIZER = "Matra Shakti";
 // ---------------------------------------------------
 
-const PAD = 8; // highlight ke aas-paas khali jagah (px)
+const PAD = 8;
 
-// target = page par data-tour="..." wala hissa jo highlight hoga
-// last: true = aakhri step, us hisse par click ho to tour band ho jata hai
+const TOUR_DELAY_MS = 5 * 1000;
+
+const CLOSE_MS = 350;
 
 // ---------- Landing page ka tour ----------
 export const LANDING_TOUR = {
@@ -126,26 +127,18 @@ export const DETAILS_TOUR = {
   ],
 };
 
-export function hasSeenTour(tour) {
-  try {
-    return localStorage.getItem(tour.key) === "1";
-  } catch {
-    return false;
-  }
+// Ab hum yaad nahi rakhte ki tour dekha ya nahi.
+// Isliye ye hamesha false deta hai, aur page khulte hi instructions aate hain.
+// (Jin pages mein hasSeenTour use hota hai, unhe badalne ki zaroorat nahi.)
+export function hasSeenTour() {
+  return false;
 }
 
-function markTourDone(tour) {
-  try {
-    localStorage.setItem(tour.key, "1");
-  } catch {
-    // storage band ho to bhi koi dikkat nahi
-  }
-}
-
-export default function Onboarding({ tour, onClose }) {
+function TourOverlay({ tour, onClose }) {
   const [steps, setSteps] = useState(null);
   const [index, setIndex] = useState(0);
   const [rect, setRect] = useState(null);
+  const [closing, setClosing] = useState(false);
   const [vp, setVp] = useState({ w: window.innerWidth, h: window.innerHeight });
   const [cardH, setCardH] = useState(250);
   const cardRef = useRef(null);
@@ -166,15 +159,19 @@ export default function Onboarding({ tour, onClose }) {
   const step = steps ? steps[index] : null;
   const isLast = Boolean(steps) && index === steps.length - 1;
 
-  const finish = useCallback(() => {
-    markTourDone(tour);
-    onCloseRef.current();
-  }, [tour]);
+  // When nothing is highlighted, the page behind must not move
+  const lockScroll = Boolean(step) && !step.target;
 
-  // Last step dikhte hi "dekh liya" maan lo, taaki baar-baar na aaye
+  // Band karna: pehle animation chalti hai, phir tour hatta hai
+  const finish = useCallback(() => {
+    setClosing(true);
+  }, []);
+
   useEffect(() => {
-    if (isLast) markTourDone(tour);
-  }, [isLast, tour]);
+    if (!closing) return;
+    const timer = setTimeout(() => onCloseRef.current(), CLOSE_MS);
+    return () => clearTimeout(timer);
+  }, [closing]);
 
   // Esc dabane par skip
   useEffect(() => {
@@ -182,6 +179,22 @@ export default function Onboarding({ tour, onClose }) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [finish]);
+
+  // Lock the page scroll while a card is shown without any highlight
+  useEffect(() => {
+    if (!lockScroll) return;
+    const body = document.body;
+    const prevOverflow = body.style.overflow;
+    const prevPadding = body.style.paddingRight;
+    // Keep the layout from shifting when the desktop scrollbar disappears
+    const scrollbar = window.innerWidth - document.documentElement.clientWidth;
+    body.style.overflow = "hidden";
+    if (scrollbar > 0) body.style.paddingRight = `${scrollbar}px`;
+    return () => {
+      body.style.overflow = prevOverflow;
+      body.style.paddingRight = prevPadding;
+    };
+  }, [lockScroll]);
 
   // Target tak scroll karo aur uski jagah track karte raho
   useEffect(() => {
@@ -234,7 +247,15 @@ export default function Onboarding({ tour, onClose }) {
 
   if (!step) return null;
 
-  const next = () => setIndex((i) => Math.min(i + 1, steps.length - 1));
+  const next = () => {
+    if (closing) return;
+    setIndex((i) => Math.min(i + 1, steps.length - 1));
+  };
+
+  // Card ki animation: aate waqt neeche utarta hai, jaate waqt upar chadhta hai
+  const cardAnimation = closing
+    ? `tour-slide-up ${CLOSE_MS}ms ease-in forwards`
+    : "tour-slide-down .4s ease-out both";
 
   const dots = (
     <div className="flex items-center gap-1.5">
@@ -308,6 +329,22 @@ export default function Onboarding({ tour, onClose }) {
         0%, 100% { transform: translateY(0); }
         50%      { transform: translateY(-6px); }
       }
+      @keyframes tour-slide-down {
+        from { opacity: 0; transform: translateY(-48px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes tour-slide-up {
+        from { opacity: 1; transform: translateY(0); }
+        to   { opacity: 0; transform: translateY(-80px); }
+      }
+      @keyframes tour-fade {
+        from { opacity: 0; }
+        to   { opacity: 1; }
+      }
+      @keyframes tour-fade-out {
+        from { opacity: 1; }
+        to   { opacity: 0; }
+      }
     `}</style>
   );
 
@@ -316,9 +353,29 @@ export default function Onboarding({ tour, onClose }) {
     return (
       <>
         {styles}
-        <div className="fixed inset-0 z-[60] bg-black/60" />
-        <div className="pointer-events-none fixed inset-0 z-[62] flex items-center justify-center px-5">
-          <div className="pointer-events-auto w-full max-w-sm">{body}</div>
+        <div
+          className="fixed inset-0 z-[60] bg-black/60"
+          style={{
+            animation: closing
+              ? `tour-fade-out ${CLOSE_MS}ms ease-in forwards`
+              : "tour-fade .3s ease-out both",
+            touchAction: "none",
+            overscrollBehavior: "none",
+          }}
+        />
+        <div
+          className="pointer-events-none fixed inset-0 z-[62] flex items-center justify-center px-5"
+          style={{ touchAction: "none", overscrollBehavior: "none" }}
+        >
+          <div
+            key={step.id}
+            className={`w-full max-w-sm ${
+              closing ? "pointer-events-none" : "pointer-events-auto"
+            }`}
+            style={{ animation: cardAnimation }}
+          >
+            {body}
+          </div>
         </div>
       </>
     );
@@ -361,7 +418,7 @@ export default function Onboarding({ tour, onClose }) {
       {/* Last step ke alawa baaki steps mein page par click band */}
       <div
         className="fixed inset-0 z-[60]"
-        style={{ pointerEvents: isLast ? "none" : "auto" }}
+        style={{ pointerEvents: isLast && !closing ? "none" : "auto" }}
       />
 
       {/* Highlight: bahar ka hissa dark, andar ka saaf */}
@@ -370,7 +427,9 @@ export default function Onboarding({ tour, onClose }) {
         style={{
           ...hole,
           boxShadow: "0 0 0 9999px rgba(0,0,0,.62)",
-          animation: isLast ? "tour-pulse 1.6s ease-out infinite" : "none",
+          animation: isLast && !closing ? "tour-pulse 1.6s ease-out infinite" : "none",
+          opacity: closing ? 0 : 1,
+          transition: `opacity ${CLOSE_MS}ms ease-in`,
         }}
       />
 
@@ -381,24 +440,44 @@ export default function Onboarding({ tour, onClose }) {
           left: cardLeft,
           width: cardW,
           ...cardPos,
-          animation: isLast ? "tour-bounce 1.2s ease-in-out infinite" : "none",
+          animation: isLast && !closing ? "tour-bounce 1.2s ease-in-out infinite" : "none",
+          pointerEvents: closing ? "none" : "auto",
         }}
       >
-        <div className="relative" ref={cardRef}>
-          {body}
-          {mode !== "overlay" && (
-            <span
-              className="absolute h-4 w-4 rotate-45 border-line bg-card"
-              style={{
-                left: arrowLeft,
-                ...(mode === "above"
-                  ? { bottom: -8, borderRightWidth: 1, borderBottomWidth: 1 }
-                  : { top: -8, borderLeftWidth: 1, borderTopWidth: 1 }),
-              }}
-            />
-          )}
+        <div key={step.id} style={{ animation: cardAnimation }}>
+          <div className="relative" ref={cardRef}>
+            {body}
+            {mode !== "overlay" && (
+              <span
+                className="absolute h-4 w-4 rotate-45 border-line bg-card"
+                style={{
+                  left: arrowLeft,
+                  ...(mode === "above"
+                    ? { bottom: -8, borderRightWidth: 1, borderBottomWidth: 1 }
+                    : { top: -8, borderLeftWidth: 1, borderTopWidth: 1 }),
+                }}
+              />
+            )}
+          </div>
         </div>
       </div>
     </>
   );
+}
+
+// Wrapper: shows the tour after a delay. Pass delayMs={0} to show it right away.
+export default function Onboarding({ tour, onClose, delayMs = TOUR_DELAY_MS }) {
+  const [ready, setReady] = useState(delayMs === 0);
+
+  useEffect(() => {
+    if (delayMs === 0) {
+      setReady(true);
+      return;
+    }
+    const timer = setTimeout(() => setReady(true), delayMs);
+    return () => clearTimeout(timer);
+  }, [delayMs]);
+
+  if (!ready) return null;
+  return <TourOverlay tour={tour} onClose={onClose} />;
 }

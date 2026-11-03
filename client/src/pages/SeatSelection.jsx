@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, HelpCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import SeatMap from "../components/SeatMap";
 import { EVENT, TOTAL_SEATS } from "../config/event";
 import { getSeats, holdSeats } from "../api";
@@ -36,8 +36,20 @@ export default function SeatSelection() {
   const [error, setError] = useState("");
   // Pehli baar aane par instructions dikhao
   const [showTour, setShowTour] = useState(() => !hasSeenTour(SEAT_TOUR));
+  // true = button se khola gaya, isliye turant dikhao (wait nahi)
+  const [openNow, setOpenNow] = useState(false);
 
   const available = TOTAL_SEATS - booked.length - held.length;
+
+  const reopenTour = () => {
+    setOpenNow(true);
+    setShowTour(true);
+  };
+
+  const closeTour = () => {
+    setShowTour(false);
+    setOpenNow(false);
+  };
 
   const loadSeats = useCallback(async () => {
     try {
@@ -112,14 +124,6 @@ export default function SeatSelection() {
             {EVENT.movieName} · {EVENT.cinemaName}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowTour(true)}
-          aria-label="Instructions dekhein"
-          className="ml-auto rounded-xl border border-line bg-card p-2 text-ink-soft"
-        >
-          <HelpCircle className="h-5 w-5" />
-        </button>
       </div>
 
       <div className="mt-4 flex gap-2" data-tour="counts">
@@ -129,13 +133,21 @@ export default function SeatSelection() {
         <Chip label="Selected" value={selected.length} color="text-[#4a77a3]" />
       </div>
 
+      <button
+        type="button"
+        onClick={reopenTour}
+        className="mt-3 self-start text-xs text-ink-soft underline"
+      >
+        Instructions dobara dekhein
+      </button>
+
       {error && (
         <p className="mt-3 rounded-xl border border-[#c0564b]/30 bg-[#c0564b]/10 px-3 py-2 text-sm text-[#c0564b]">
           {error}
         </p>
       )}
 
-      <div className="mt-5 rounded-3xl border border-line bg-card p-3" data-tour="map">
+      <div className="mt-4 rounded-3xl border border-line bg-card p-3" data-tour="map">
         <SeatMap
           booked={booked}
           held={held}
@@ -180,7 +192,13 @@ export default function SeatSelection() {
         </div>
       </div>
 
-      {showTour && <Onboarding tour={SEAT_TOUR} onClose={() => setShowTour(false)} />}
+      {showTour && (
+        <Onboarding
+          tour={SEAT_TOUR}
+          delayMs={openNow ? 0 : undefined}
+          onClose={closeTour}
+        />
+      )}
     </div>
   );
 }

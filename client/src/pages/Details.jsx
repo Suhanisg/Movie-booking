@@ -31,9 +31,21 @@ export default function Details() {
   const [now, setNow] = useState(Date.now());
   // Pehli baar aane par instructions dikhao
   const [showTour, setShowTour] = useState(() => !hasSeenTour(DETAILS_TOUR));
+  // true = button se khola gaya, isliye turant dikhao (wait nahi)
+  const [openNow, setOpenNow] = useState(false);
 
   const remaining = expiresAt - now;
   const expired = Boolean(holdToken) && remaining <= 0;
+
+  const reopenTour = () => {
+    setOpenNow(true);
+    setShowTour(true);
+  };
+
+  const closeTour = () => {
+    setShowTour(false);
+    setOpenNow(false);
+  };
 
   // Countdown: har second update
   useEffect(() => {
@@ -159,7 +171,7 @@ export default function Details() {
 
       <button
         type="button"
-        onClick={() => setShowTour(true)}
+        onClick={reopenTour}
         className="mt-2 self-start text-xs text-ink-soft underline"
       >
         Instructions dobara dekhein
@@ -251,7 +263,11 @@ export default function Details() {
       </div>
 
       {showTour && (
-        <Onboarding tour={DETAILS_TOUR} onClose={() => setShowTour(false)} />
+        <Onboarding
+          tour={DETAILS_TOUR}
+          delayMs={openNow ? 0 : undefined}
+          onClose={closeTour}
+        />
       )}
     </div>
   );
