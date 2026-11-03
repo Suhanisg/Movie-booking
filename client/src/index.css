@@ -1,0 +1,38 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Poppins", sans-serif;
+
+  --color-page: #f5ebe0;
+  --color-card: #fffaf4;
+  --color-line: #e6d5c5;
+  --color-ink: #3d2b24;
+  --color-ink-soft: #8a6f60;
+  --color-brand: #b5694a;
+  --color-brand-dark: #9a5538;
+  --color-gold: #c9a27e;
+
+  --color-seat-free: #8fb996;
+  --color-seat-picked: #5b86b0;
+  --color-seat-booked: #cf6f66;
+}
+
+body {
+  background: var(--color-page);
+  color: var(--color-ink);
+}
+/* scrollbar chhupao, scroll chalta rahega */
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE / Edge purana */
+  scrollbar-width: none; /* Firefox */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Android */
+}
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: white; }
+  .ticket { break-inside: avoid; box-shadow: none; }
+}
