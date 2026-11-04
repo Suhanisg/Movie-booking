@@ -70,59 +70,60 @@ function TicketCard({ person, bookingId, setRef }) {
           className="absolute inset-0"
           style={{ backgroundColor: `rgba(255, 249, 241, ${DETAILS_OVERLAY})` }}
         />
+
         <div className="relative">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-[11px] text-ink-soft">Guest</p>
-            <p className="truncate text-base font-semibold text-ink">
-              {person.name}
-            </p>
-            <p className="mt-2 text-[11px] text-ink-soft">Mobile</p>
-            <p className="text-sm font-medium text-ink">
-              {maskMobile(person.mobile)}
-            </p>
-          </div>
-          <div className="rounded-2xl bg-seat-picked px-4 py-3 text-center text-white shadow-md">
-            <p className="text-[10px] opacity-80">SEAT</p>
-            <p className="text-2xl font-bold leading-none">{person.seat}</p>
-          </div>
-        </div>
-
-        {/* ticket ki cut-line */}
-        <div className="my-4 border-t-2 border-dashed border-ink-soft/40" />
-
-        <div className="grid grid-cols-2 gap-3 text-xs">
-          <div>
-            <p className="text-ink-soft">Booking ID</p>
-            <p className="font-semibold text-ink">{bookingId}</p>
-          </div>
-          <div>
-            <p className="text-ink-soft">Status</p>
-            <p className="font-semibold text-[#5f9a6b]">CONFIRMED</p>
-          </div>
-          {EVENT.date && (
-            <div>
-              <p className="text-ink-soft">Date</p>
-              <p className="font-semibold text-ink">{EVENT.date}</p>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] text-ink-soft">Guest</p>
+              <p className="break-words text-base font-semibold leading-snug text-ink">
+                {person.name}
+              </p>
+              <p className="mt-2 text-[11px] text-ink-soft">Mobile</p>
+              <p className="text-sm font-medium text-ink">
+                {maskMobile(person.mobile)}
+              </p>
             </div>
-          )}
-          {EVENT.time && (
-            <div>
-              <p className="text-ink-soft">Time</p>
-              <p className="font-semibold text-ink">{EVENT.time}</p>
+            <div className="shrink-0 rounded-2xl bg-seat-picked px-4 py-3 text-center text-white shadow-md">
+              <p className="text-[10px] opacity-80">SEAT</p>
+              <p className="text-2xl font-bold leading-none">{person.seat}</p>
             </div>
-          )}
-        </div>
+          </div>
 
-        <a
-          href={whatsappLink({ ...person, bookingId })}
-          target="_blank"
-          rel="noreferrer"
-          className="no-print mt-4 flex items-center justify-center gap-2 rounded-2xl border border-line bg-white/70 py-2.5 text-sm font-semibold text-ink active:scale-95"
-        >
-          <MessageCircle className="h-4 w-4" />
-          Share on WhatsApp
-        </a>
+          {/* ticket ki cut-line */}
+          <div className="my-4 border-t-2 border-dashed border-ink-soft/40" />
+
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            <div className="min-w-0">
+              <p className="text-ink-soft">Booking ID</p>
+              <p className="break-all font-semibold text-ink">{bookingId}</p>
+            </div>
+            <div className="min-w-0">
+              <p className="text-ink-soft">Status</p>
+              <p className="font-semibold text-[#5f9a6b]">CONFIRMED</p>
+            </div>
+            {EVENT.date && (
+              <div className="min-w-0">
+                <p className="text-ink-soft">Date</p>
+                <p className="font-semibold text-ink">{EVENT.date}</p>
+              </div>
+            )}
+            {EVENT.time && (
+              <div className="min-w-0">
+                <p className="text-ink-soft">Time</p>
+                <p className="font-semibold text-ink">{EVENT.time}</p>
+              </div>
+            )}
+          </div>
+
+          <a
+            href={whatsappLink({ ...person, bookingId })}
+            target="_blank"
+            rel="noreferrer"
+            className="no-print mt-4 flex items-center justify-center gap-2 rounded-2xl border border-line bg-white/70 py-3 text-sm font-semibold text-ink active:scale-95"
+          >
+            <MessageCircle className="h-4 w-4 shrink-0" />
+            Share on WhatsApp
+          </a>
         </div>
       </div>
     </div>
@@ -152,18 +153,18 @@ export default function Ticket() {
         if (people.length > 1) await new Promise((r) => setTimeout(r, 400));
       }
     } catch {
-      setError("Ticket download nahi ho paaya. Dobara try karo.");
+      setError("Could not download the ticket. Please try again.");
     } finally {
       setDownloading(false);
     }
   };
 
   return (
-    <div className="mx-auto min-h-screen max-w-md px-4 pb-10 pt-6">
+    <div className="mx-auto min-h-dvh w-full max-w-md px-4 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-6">
       <div className="mb-5 text-center">
         <CheckCircle2 className="mx-auto h-12 w-12 text-[#5f9a6b]" />
         <h1 className="mt-2 text-xl font-bold text-ink">Booking confirmed!</h1>
-        <p className="text-xs text-ink-soft">
+        <p className="break-all text-xs text-ink-soft">
           {people.length} {people.length === 1 ? "ticket" : "tickets"} · ID{" "}
           {bookingId}
         </p>
@@ -186,23 +187,31 @@ export default function Ticket() {
         </p>
       )}
 
-      <div className="no-print mt-6 flex gap-3">
+      {/* Buttons: one under the other, so they fit every phone width */}
+      <div className="no-print mt-6 space-y-3">
         <button
           type="button"
           onClick={handleDownload}
           disabled={downloading}
-          className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-brand py-3 font-semibold text-card active:scale-95 disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-brand px-4 py-3.5 text-base font-semibold text-card shadow-lg shadow-brand/25 transition active:scale-95 disabled:opacity-60"
         >
           {downloading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="h-5 w-5 shrink-0 animate-spin" />
           ) : (
-            <Download className="h-4 w-4" />
+            <Download className="h-5 w-5 shrink-0" />
           )}
-          {people.length > 1 ? "Download tickets" : "Download ticket"}
+          <span>
+            {downloading
+              ? "Preparing..."
+              : people.length > 1
+                ? "Download tickets"
+                : "Download ticket"}
+          </span>
         </button>
+
         <Link
           to="/"
-          className="flex flex-1 items-center justify-center rounded-2xl border border-line bg-card py-3 font-semibold text-ink active:scale-95"
+          className="flex w-full items-center justify-center rounded-2xl border border-line bg-card px-4 py-3.5 text-base font-semibold text-ink transition active:scale-95"
         >
           Home
         </Link>
