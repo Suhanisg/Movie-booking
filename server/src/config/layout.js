@@ -1,4 +1,4 @@
-export const LAYOUT = { rows: ["B", "C", "D", "E"], perRow: 20 };
+export const LAYOUT = { rows: ["B", "C", "D"], perRow: 20 };
 
 export const ALL_SEATS = LAYOUT.rows.flatMap((row) =>
   Array.from({ length: LAYOUT.perRow }, (_, i) =>

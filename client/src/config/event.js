@@ -11,7 +11,7 @@ export const EVENT = {
 };
 // Seat layout yahin se badlega (rows, aur aisle ke dono taraf kitni seats)
 export const SEAT_LAYOUT = {
-  rows: ["B", "C", "D", "E"],
+  rows: ["B", "C", "D"],
   leftSeats: 11,
   rightSeats: 9,
 };
